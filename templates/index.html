@@ -2,68 +2,84 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photo Capture</title>
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        button {
+            padding: 20px 30px;
+            font-size: 64px;
+            cursor: pointer;
+            background: white;
+            border: 5px solid black;
+            width: calc(100% - 20px);
+        }
+    </style>
 </head>
 <body>
-    <h1>Photo Capture</h1>
-    <button id="captureBtn">Capture Photo</button>
-    <video id="cameraPreview" style="display: none;" width="400" height="300"></video>
-    <img id="capturedPhoto" src="" style="display: none;">
-    <audio id="audioPlayer" controls style="display: none;"></audio>
+<script>
+    const url = '/upload/image/';
 
-    <script>
-        $(document).ready(function(){
-            $("#captureBtn").click(function(){
-                // Access the user's camera
-                navigator.mediaDevices.getUserMedia({ video: true })
-                    .then(function(stream) {
-                        // Display camera preview
-                        $("#cameraPreview").show();
-                        $("#cameraPreview")[0].srcObject = stream;
+    let ctx;
+    let audio;
 
-                        // Capture a photo after a delay
-                        setTimeout(function(){
-                            // Create a canvas element and draw the photo on it
-                            var canvas = document.createElement('canvas');
-                            var context = canvas.getContext('2d');
-                            canvas.width = 400;
-                            canvas.height = 300;
-                            context.drawImage($("#cameraPreview")[0], 0, 0, 400, 300);
-                            var photoDataUrl = canvas.toDataURL('image/jpeg');
+    let imageCapture;
 
-                            // Send the captured photo to the server
-                            $.ajax({
-                                type: 'POST',
-                                url: '/capture_photo',
-                                data: { photo: photoDataUrl },
-                                success: function(photoPath){
-                                    // Hide camera preview
-                                    $("#cameraPreview").hide();
+    const canvas = document.createElement('canvas');
+    const ctx2 = canvas.getContext('2d');
+    const constraints = {
+        video: {
+            facingMode: 'environment'
+        }
+    };
+    navigator.mediaDevices.getUserMedia(constraints)
+        .then(stream => {
+            const track = stream.getVideoTracks()[0];
+            imageCapture = new ImageCapture(track);
+        })
 
-                                    // Update image source and show it
-                                    $("#capturedPhoto").attr("src", photoPath);
-                                    $("#capturedPhoto").show();
-
-                                    // Simulate processing time before playing audio
-                                    setTimeout(function(){
-                                        // Show audio player
-                                        $("#audioPlayer").attr("src", "/play_audio");
-                                        $("#audioPlayer").show();
-                                    }, 2000); // Adjust the delay as needed
-                                }
-                            });
-
-                            // Stop the camera stream
-                            stream.getTracks().forEach(track => track.stop());
-                        }, 2000); // Adjust the delay as needed
+    function uploadImage() {
+        if (!ctx) {
+            ctx = new AudioContext();
+        }
+        if (!imageCapture) {
+            alert('No camera available');
+            return;
+        }
+        imageCapture.grabFrame().then(imageBitmap => {
+            canvas.width = imageBitmap.width;
+            canvas.height = imageBitmap.height;
+            ctx2.drawImage(imageBitmap, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(blob => {
+                const formData = new FormData();
+                formData.append('image', blob);
+                fetch(url, {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    return response.arrayBuffer()
+                })
+                    .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+                    .then(decodedAudio => {
+                        audio = decodedAudio;
+                        const source = ctx.createBufferSource();
+                        source.buffer = audio;
+                        source.connect(ctx.destination);
+                        source.start();
                     })
-                    .catch(function(error) {
-                        console.error('Error accessing camera:', error);
+                    .catch(error => {
+                        console.error('Error:', error);
                     });
             });
         });
-    </script>
+    }
+</script>
+<button onclick="uploadImage()">Upload Image</button>
 </body>
 </html>
