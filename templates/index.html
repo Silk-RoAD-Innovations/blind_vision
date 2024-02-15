@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Capture</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+</head>
+<body>
+    <h1>Photo Capture</h1>
+    <button id="captureBtn">Capture Photo</button>
+    <video id="cameraPreview" style="display: none;" width="400" height="300"></video>
+    <img id="capturedPhoto" src="" style="display: none;">
+    <audio id="audioPlayer" controls style="display: none;"></audio>
+
+    <script>
+        $(document).ready(function(){
+            $("#captureBtn").click(function(){
+                // Access the user's camera
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function(stream) {
+                        // Display camera preview
+                        $("#cameraPreview").show();
+                        $("#cameraPreview")[0].srcObject = stream;
+
+                        // Capture a photo after a delay
+                        setTimeout(function(){
+                            // Create a canvas element and draw the photo on it
+                            var canvas = document.createElement('canvas');
+                            var context = canvas.getContext('2d');
+                            canvas.width = 400;
+                            canvas.height = 300;
+                            context.drawImage($("#cameraPreview")[0], 0, 0, 400, 300);
+                            var photoDataUrl = canvas.toDataURL('image/jpeg');
+
+                            // Send the captured photo to the server
+                            $.ajax({
+                                type: 'POST',
+                                url: '/capture_photo',
+                                data: { photo: photoDataUrl },
+                                success: function(photoPath){
+                                    // Hide camera preview
+                                    $("#cameraPreview").hide();
+
+                                    // Update image source and show it
+                                    $("#capturedPhoto").attr("src", photoPath);
+                                    $("#capturedPhoto").show();
+
+                                    // Simulate processing time before playing audio
+                                    setTimeout(function(){
+                                        // Show audio player
+                                        $("#audioPlayer").attr("src", "/play_audio");
+                                        $("#audioPlayer").show();
+                                    }, 2000); // Adjust the delay as needed
+                                }
+                            });
+
+                            // Stop the camera stream
+                            stream.getTracks().forEach(track => track.stop());
+                        }, 2000); // Adjust the delay as needed
+                    })
+                    .catch(function(error) {
+                        console.error('Error accessing camera:', error);
+                    });
+            });
+        });
+    </script>
+</body>
+</html>
