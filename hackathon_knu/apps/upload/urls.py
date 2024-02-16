@@ -10,18 +10,10 @@ router.register('image', ImageAPIVIew, 'music')
 
 
 urlpatterns = [
-    # path('image/', ImageAPIVIew.as_view(), name='get-tour'),
+
 ]
 
 
 
 urlpatterns += router.urls
 
-
-# from django.urls import path
-# from .views import index, upload_photo
-
-# urlpatterns = [
-#     # path('', index, name='index'),
-#     path('upload_photo/', upload_photo, name='upload_photo'),
-# ]

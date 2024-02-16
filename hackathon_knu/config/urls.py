@@ -35,8 +35,16 @@ schema_view = get_schema_view(
    permission_classes=[permissions.AllowAny],
 )
 
+
+from django.shortcuts import render
+
+def index(request):
+    return render(request, "index.html")
+
+
 urlpatterns = [
-    path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    #path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path("", index, name="index"),
     path('admin/', admin.site.urls),
     path('upload/', include('apps.upload.urls')),
 ]

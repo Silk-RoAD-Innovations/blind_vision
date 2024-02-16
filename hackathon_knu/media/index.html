@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: rgba(0, 0, 0, 0.84);
+            overflow-y: hidden;
+            background-image: url('../media/Frame\ 3.png');
+            background-position: right top;
+            background-repeat: no-repeat;
+        }
+        button {
+            padding: 20px 30px;
+            font-size: 64px;
+            cursor: pointer;
+            background: white;
+            border: 5px solid black;
+            width: calc(100% - 20px);
+            background: #BAEC29;
+            border-radius: 70px;
+            color: rgba(0, 0, 0, 0.84);
+            position: absolute;
+            width: 100%;
+        }
+        button:disabled{
+            background: red;
+        }
+        .img{
+            position: absolute;
+            bottom: 5%;
+            right: 10%;
+        }
+    </style>
+</head>
+<body>
+<script>
+    const url = 'https://8b1a-212-241-24-119.ngrok-free.app/upload/image/';
+
+    let ctx;
+    let audio;
+
+    let imageCapture;
+
+    const canvas = document.createElement('canvas');
+    const ctx2 = canvas.getContext('2d');
+    const constraints = {
+        video: {
+            facingMode: 'environment'
+        }
+    };
+    navigator.mediaDevices.getUserMedia(constraints)
+        .then(stream => {
+            const track = stream.getVideoTracks()[0];
+            imageCapture = new ImageCapture(track);
+        })
+
+    
+     function enableButton() {
+        document.querySelector('button').disabled = false;
+    }
+
+    function disableButton() {
+        document.querySelector('button').disabled = true;
+    }
+
+    function uploadImage() {
+        
+        disableButton()
+
+        if (!ctx) {
+            ctx = new AudioContext();
+        }
+        if (!imageCapture) {
+            alert('No camera available');
+            enableButton()
+            return;
+        }
+        imageCapture.grabFrame().then(imageBitmap => {
+            canvas.width = imageBitmap.width;
+            canvas.height = imageBitmap.height;
+            ctx2.drawImage(imageBitmap, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(blob => {
+                const formData = new FormData();
+                formData.append('image', blob, 'filename.jpg', { type: 'image/jpeg', quality: 0.5 });
+                fetch(url, {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    return response.arrayBuffer()
+                })
+                    .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+                    .then(decodedAudio => {
+                        audio = decodedAudio;
+                        const source = ctx.createBufferSource();
+                        source.buffer = audio;
+                        source.connect(ctx.destination);
+                        source.start();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            });
+            enableButton()
+        });
+    }
+    
+</script>
+<button onclick="uploadImage()"> Сүрөткө <br> тартуу</button>
+<img src="../media/SilkroAD.png" alt="" class="img">
+</body>
+</html>
