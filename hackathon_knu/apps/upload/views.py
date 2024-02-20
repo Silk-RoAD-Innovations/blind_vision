@@ -57,7 +57,7 @@ def download_audio(text_):
     })
     headers = {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer itS2UoaWjrEcIwmToywRykwLVvdmJFLBZKBzcLTV3FIqCmbiiRvHKZ8c04zQx350'
+    'Authorization': 'Bearer zBvc7mkrGJHsFRkx7By91tUVSDpYuYji60bKyMjux80o3eFayeVPAq0mljwKmTvl'
     }
     response = requests.request("POST", url, headers=headers, data=payload, verify=False)
     audio_data = response.content
@@ -74,7 +74,7 @@ class ImageAPIVIew(ModelViewSet):
     def create(self, request, *args, **kwargs):
         uploaded_image = request.data.get('image')
         image = Image.open(uploaded_image)
-        image.show()
+
         text_ = return_text_from_image(image)
         download_audio(text_)
         with open('audio_file.mp3', 'rb') as audio_file:
