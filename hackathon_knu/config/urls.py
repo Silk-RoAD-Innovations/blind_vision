@@ -16,35 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework import permissions
-from drf_yasg.views import get_schema_view
-from drf_yasg import openapi
 from django.conf import settings
 from django.conf.urls.static import static
-
-schema_view = get_schema_view(
-   openapi.Info(
-      title="Muras API",
-      default_version='v1',
-      description="This is Muras API",
-      terms_of_service="https://www.google.com/policies/terms/",
-      contact=openapi.Contact(email="info.muras_travel@gmail.com"),
-      license=openapi.License(name="Muras Travel License"),
-   ),
-   public=True,
-   permission_classes=[permissions.AllowAny],
-)
-
-
 from django.shortcuts import render
-
-def index(request):
-    return render(request, "index.html")
 
 
 urlpatterns = [
-    #path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path("", index, name="index"),
     path('admin/', admin.site.urls),
     path('upload/', include('apps.upload.urls')),
 ]
